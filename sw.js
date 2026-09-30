@@ -1,6 +1,5 @@
-const CACHE_NAME = "hello-world-v3";
-
-const FILES_TO_CACHE = [
+const CACHE_NAME = "hello-world-pwa-v1";
+const APP_SHELL = [
   "./",
   "./index.html",
   "./style.css",
@@ -13,9 +12,9 @@ const FILES_TO_CACHE = [
 self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(FILES_TO_CACHE))
+      .then(cache => cache.addAll(APP_SHELL))
+      .then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
 self.addEventListener("activate", event => {
@@ -23,7 +22,7 @@ self.addEventListener("activate", event => {
     caches.keys()
       .then(cacheNames => Promise.all(
         cacheNames
-          .filter(cacheName => cacheName !== CACHE_NAME)
+          .filter(cacheName => cacheName.startsWith("hello-world-pwa-") && cacheName !== CACHE_NAME)
           .map(cacheName => caches.delete(cacheName))
       ))
       .then(() => self.clients.claim())
@@ -31,24 +30,25 @@ self.addEventListener("activate", event => {
 });
 
 self.addEventListener("fetch", event => {
-  if (event.request.method !== "GET" || new URL(event.request.url).origin !== self.location.origin) {
+  const requestUrl = new URL(event.request.url);
+  if (event.request.method !== "GET" || requestUrl.origin !== self.location.origin) {
     return;
   }
 
   event.respondWith(
     fetch(event.request)
-      .then(response => {
-        if (!response.ok) return response;
-        return caches.open(CACHE_NAME)
-          .then(cache => cache.put(event.request, response.clone()))
-          .then(() => response);
+      .then(async response => {
+        if (response.ok) {
+          const responseCopy = response.clone();
+          const cache = await caches.open(CACHE_NAME);
+          await cache.put(event.request, responseCopy);
+        }
+        return response;
       })
       .catch(async () => {
-        const cached = await caches.match(event.request);
-        if (cached) return cached;
-        if (event.request.mode === "navigate") {
-          return caches.match("./index.html");
-        }
+        const cachedResponse = await caches.match(event.request);
+        if (cachedResponse) return cachedResponse;
+        if (event.request.mode === "navigate") return caches.match("./index.html");
         return Response.error();
       })
   );
