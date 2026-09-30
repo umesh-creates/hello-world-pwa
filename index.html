@@ -4,19 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0084FF">
+    <meta name="description" content="A simple Hello World progressive web app.">
     <title>Hello World PWA</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="./manifest.json">
 </head>
 
 <body>
-    <h1>Hello World!</h1>
+    <main>
+        <h1>Hello World!</h1>
+    </main>
+    <script src="app.js"></script>
 </body>
-<script src="app.js"></script>
-<script>
-if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("./sw.js");
-}
-</script>
-
 </html>
