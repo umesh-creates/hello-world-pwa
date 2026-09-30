@@ -1,0 +1,1 @@
+alert('welcome to PWA hello world app')
