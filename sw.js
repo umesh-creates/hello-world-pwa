@@ -1,4 +1,4 @@
-const CACHE_NAME = "hello-world-v2";
+const CACHE_NAME = "hello-world-v3";
 
 const FILES_TO_CACHE = [
   "./",
@@ -36,9 +36,16 @@ self.addEventListener("fetch", event => {
   }
 
   event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
-      .catch(() => {
+    fetch(event.request)
+      .then(response => {
+        if (!response.ok) return response;
+        return caches.open(CACHE_NAME)
+          .then(cache => cache.put(event.request, response.clone()))
+          .then(() => response);
+      })
+      .catch(async () => {
+        const cached = await caches.match(event.request);
+        if (cached) return cached;
         if (event.request.mode === "navigate") {
           return caches.match("./index.html");
         }
